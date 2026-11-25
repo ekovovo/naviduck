@@ -113,7 +113,7 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 | 用户工具只读列表 | 完成 | `Unavailable` + `account_list_sql=Some` 时渲染只读列表（隐藏新建/设计、禁双击）；SQLite 原因文本行为不变；`security_plan` 测试补 Dameng 契约 |
 | 迁移不可回滚提示 | 完成 | 预览页在 `transactional_ddl=false` 时显示固定提示（达梦与 MySQL 同样适用，能力驱动不按产品分支） |
 | 实库测试 | 完成 | `NAVIDUCK_DM_LIVE=1` 10 项本地通过（2026-11-25 补丁接线后单线程与并行各跑一次）：连接/错误密码、目录八方法、中文、LOB、事务与 DDL 隐式提交、取消杀会话、SET SCHEMA、分页、EXPLAIN、lazy fetch、设计器迁移语法；DM 镜像不进 CI（许可）。LOB/EXPLAIN/SET SCHEMA 三项守卫已随补丁接线转正 |
-| dm-pure 补丁接线 | 基本完成 | 四补丁按验收记录并对照 Go 驱动（`gitee.com/chunanyong/dm`）重建于本地镜像 `~/github-project/dm8_pure_rs`（分支 `fix/protocol-lob-explain-error-status`，仅改 `src/client.rs`）；根 Cargo.toml 已接 `[patch.crates-io]`（暂为本地 path，仓库建立后切 git 依赖并提交 Cargo.lock）；实库测试 10 项全通过，三个守卫转正。待办：创建 `github.com/ekovovo/dm8_pure_rs`、推送（征得同意）、patch 切 git |
+| dm-pure 补丁接线 | 完成 | 四补丁按验收记录并对照 Go 驱动（`gitee.com/chunanyong/dm`）重建，推送到自建镜像 `github.com/ekovovo/dm-rs`（分支 `fix/protocol-lob-explain-error-status`，仅改 `src/client.rs`）；根 Cargo.toml `[patch.crates-io]` git 依赖接线，Cargo.lock 已提交；实库测试 10 项全通过，三个守卫转正。上游恢复后提 PR，发修复版后切回 crates.io |
 
 ### chrono → jiff（RUSTSEC-2026-0543）
 
@@ -309,7 +309,6 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 
 | 项目 | 引入于 | 计划处理 |
 | --- | --- | --- |
-| dm-pure 四补丁已重建并接线（path patch），托管仓库 `ekovovo/dm8_pure_rs` 尚未创建：patch 暂指本地镜像 `~/github-project/dm8_pure_rs`，Cargo.lock 尚未随 git 依赖提交 | M14 | 用户创建 GitHub 仓库并征得同意后推送 `main`（1.2.4 原版镜像）与 `fix/protocol-lob-explain-error-status`（四补丁），patch 切 git 依赖，重跑实库测试后提交 Cargo.lock；上游恢复后提 PR |
 | DM 实库测试为本地可选，不进 CI（DM 开发版许可仅限学习/测试/开发，1 年试用） | M14 | `NAVIDUCK_DM_LIVE=1` + `DM_PORT` 手动执行；起容器命令见 live.rs 文件头 |
 | 迁移预览的不可回滚提示按 `transactional_ddl=false` 能力显示，MySQL 预览页也因此新增同一提示（此前没有） | M14 | 能力驱动、文案事实正确；与 Navicat 并排实测后如需收敛再按能力细分 |
 | 连接表单/导航树/表查看器/查询编辑器对 DM 的整体界面目测未做（需要本机连 DM 实例走查） | M14 | 下一轮连同 CS=0 与 mode 2/4 实例一起验收 |

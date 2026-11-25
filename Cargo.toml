@@ -63,4 +63,4 @@ opt-level = "s"
 # File an upstream PR once it is reachable again; switch back to a pinned
 # crates.io release and drop this section when upstream publishes a fix.
 [patch.crates-io]
-dm-pure = { path = "/Users/eko/github-project/dm8_pure_rs" }
+dm-pure = { git = "https://github.com/ekovovo/dm-rs", branch = "fix/protocol-lob-explain-error-status" }

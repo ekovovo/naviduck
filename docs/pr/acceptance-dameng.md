@@ -61,7 +61,7 @@ DM_PORT=15236 cargo run --bin dm8-verify   # 全量九项（阶段 0 的 /tmp �
 
 ### dm-pure 缺陷与补丁（4 处）
 
-对照官方 Go 驱动（`gitee.com/chunanyong/dm`，GitHub 仓库 404）协议实现定位。2026-11-25 重建时重新克隆了该 Go 仓库（`/tmp/dm-go`）逐字段核对：cmd=32 请求的 offset/length 确为 int32（`dm_build_676.dm_build_421`），响应 `dlen` 是数据**字节数**，字符数在数据之后的可选 int32（`lobRetInfo.charLen`，自 bug 610335 起，缺失为 -1，缺省按解码后字符数兜底）。干净补丁托管在本地镜像 `~/github-project/dm8_pure_rs`（上游不可达时的自建托管，见下）：
+对照官方 Go 驱动（`gitee.com/chunanyong/dm`，GitHub 仓库 404）协议实现定位。2026-11-25 重建时重新克隆了该 Go 仓库（`/tmp/dm-go`）逐字段核对：cmd=32 请求的 offset/length 确为 int32（`dm_build_676.dm_build_421`），响应 `dlen` 是数据**字节数**，字符数在数据之后的可选 int32（`lobRetInfo.charLen`，自 bug 610335 起，缺失为 -1，缺省按解码后字符数兜底）。补丁托管在自建镜像 `~/github-project/dm-rs`（上游不可达时的自建托管，见下）：
 
 1. **行外 LOB 读回为空**（核心项）：`read_offrow_lob` 的 cmd=32 请求把 offset/length 写成 i64，协议要求 int32（Go `dm_build_676.dm_build_421`），服务器读到 length=0。改为 i32；CLOB 偏移按服务器返回的字符数推进——数据后的 int32 字符数优先，缺失时按解码后字符数兜底（Go `dm_build_198` 同逻辑）。BLOB 偏移按字节数。
 2. **EXPLAIN 挂起**：响应是 cmd=149 帧（Go `retSqlType` Dm_build_386=127+22=149），布局 int32 长度 + 计划文本，服务器随后不再发帧。dm-pure 只认 187/163，苦等至 EAGAIN。加 149 分支：解析文本按行返回单列 `PLAN` 结果集。实测（DM8 rev244896）计划文本以空行开头、每行带缩进。
@@ -74,9 +74,9 @@ DM_PORT=15236 cargo run --bin dm8-verify   # 全量九项（阶段 0 的 /tmp �
 
 判据 1–4 全部通过（LOB 经补丁 1）→ **继续 dm-pure 路线**。5–9 的缺口（取消杀会话、无 SSL、DDL 隐式提交、GB18030 命名）不阻塞，逐条写进 [140-dameng.md 第 7 节「偏差」](../design/140-dameng.md#7-偏差)。
 
-**依赖策略（已确认，上游消失后更新）**：上游仓库 `zhangtao103239/dm8_pure_rs` 在 GitHub 返回 404，全站搜索（含 fork）未找到镜像，无法 fork/提 PR。改为自建托管：公开仓库 `github.com/ekovovo/dm8_pure_rs`（非 fork，不初始化 README/license），`main` 为 crates.io 1.2.4 原版镜像，`fix/protocol-lob-explain-error-status` 分支仅含补丁（只改 `src/client.rs`）。上游发布修复版前，`naviduck-dameng` 用 `[patch.crates-io]` git 依赖指向该修复分支（`dm-pure = "=1.2.4"` + patch，提交 Cargo.lock）；上游恢复后向其提 PR，上游发修复版后切回 crates.io 精确版本并移除 patch。
+**依赖策略（已确认，上游消失后更新）**：上游仓库 `zhangtao103239/dm8_pure_rs` 在 GitHub 返回 404，全站搜索（含 fork）未找到镜像，无法 fork/提 PR。改为自建托管：公开仓库 `github.com/ekovovo/dm-rs`（非 fork，不初始化 README/license），`main` 为 crates.io 1.2.4 原版镜像，`fix/protocol-lob-explain-error-status` 分支仅含补丁（只改 `src/client.rs`）。上游发布修复版前，`naviduck-dameng` 用 `[patch.crates-io]` git 依赖指向该修复分支（`dm-pure = "=1.2.4"` + patch，提交 Cargo.lock）；上游恢复后向其提 PR，上游发修复版后切回 crates.io 精确版本并移除 patch。
 
-**2026-11-25 接线进度**：四补丁已重建于本地镜像 `~/github-project/dm8_pure_rs`（`main` = crates.io 1.2.4 原版解包，含 `.cargo_vcs_info.json` 溯源；补丁经 Go 驱动源码与帧探针双重核对），根 Cargo.toml 已加 `[patch.crates-io]`——**暂为本地 path**，仓库建立并推送后切为 `git = "https://github.com/ekovovo/dm8_pure_rs"`（branch `fix/protocol-lob-explain-error-status`）并提交 Cargo.lock。实库测试 10 项全通过，LOB/EXPLAIN/SET SCHEMA 三个守卫转正。待办：创建 GitHub 仓库、推送（征得用户同意）、patch 切 git、提交 Cargo.lock。
+**2026-11-25 接线进度（已完成）**：四补丁重建于本地镜像 `~/github-project/dm-rs`（`main` = crates.io 1.2.4 原版解包，含 `.cargo_vcs_info.json` 溯源；补丁经 Go 驱动源码与帧探针双重核对），经用户确认后创建仓库 `ekovovo/dm-rs` 并推送 `main` 与 `fix/protocol-lob-explain-error-status`；根 Cargo.toml `[patch.crates-io]` 已切为 git 依赖并提交 Cargo.lock；切 git 后实库测试 10 项复跑通过，LOB/EXPLAIN/SET SCHEMA 三个守卫转正。后续：上游恢复后提 PR，发修复版后切回 crates.io 并移除 patch。
 
 ## 验收记录（阶段 2/3，2026-11-24）
 
@@ -106,7 +106,7 @@ DM_PORT=15236 cargo run --bin dm8-verify   # 全量九项（阶段 0 的 /tmp �
 
 ### 遗留
 
-1. dm-pure 四补丁接线（2026-11-25 更新）：补丁重建、path 接线、实库测试转正守卫均已完成；剩余——用户创建 `github.com/ekovovo/dm8_pure_rs` → 推送 `main` 与 `fix/protocol-lob-explain-error-status`（征得同意）→ 根 Cargo.toml 的 patch 从本地 path 切 git 依赖 → 提交 Cargo.lock。
+1. dm-pure 四补丁接线（2026-11-25 完成）：补丁重建、仓库创建与推送、git patch 接线、Cargo.lock 提交、实库测试转正守卫均已落地；剩余——上游恢复后提 PR，发修复版后切回 crates.io 并移除 patch。
 2. DM 界面整体走查（连接表单/导航树/表查看器/查询编辑器/表设计器浅深色截图）需本机连 DM 实例目测；CS=0 与 COMPATIBLE_MODE=2/4 实例的引用与空串行为按能力字段切换，留待下一轮。
 3. 规格验收清单中依赖以上两项的条目未勾选，其余见 [140-dameng.md §8.2](../design/140-dameng.md#82-验收清单)。
 

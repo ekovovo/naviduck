@@ -1738,6 +1738,7 @@ dependencies = [
 [[package]]
 name = "dm-pure"
 version = "1.2.4"
+source = "git+https://github.com/ekovovo/dm-rs?branch=fix%2Fprotocol-lob-explain-error-status#6453e4a0d5ac5f494c238221c1fa9ee40d1f465b"
 dependencies = [
  "aes 0.8.4",
  "cipher 0.4.4",

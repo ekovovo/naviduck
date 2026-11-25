@@ -2,7 +2,7 @@
 
 M14 的第一个数据库。新建不依赖 GPUI 的 `naviduck-dameng` crate，实现 `Driver`/`Session`/`Relational`/`Dialect`，在 `naviduck-session::init` 注册。界面零分支：连接表单只读 `DriverInfo` 标志，grid/query/designer/schema 只问能力方法。专属功能清单见 [db/dameng/features.md](db/dameng/features.md)，技术验证证据见 [pr/acceptance-dameng.md](../pr/acceptance-dameng.md)。
 
-驱动：`dm-pure`（MIT，纯 Rust 同步 API）。阶段 0 判据 1–4 全部通过，ODBC 兜底不启用。dm-pure 1.2.4 有四处协议缺陷，已定位并验证补丁（验收记录「dm-pure 缺陷与补丁」节）。上游仓库 `zhangtao103239/dm8_pure_rs` 已从 GitHub 消失（404，全站含 fork 搜索无镜像），暂无法 fork/提 PR。**依赖策略（已确认）**：补丁托管在自建公开镜像 `github.com/ekovovo/dm8_pure_rs`（`main` = crates.io 1.2.4 原版镜像，`fix/protocol-lob-explain-error-status` 分支仅含四补丁），`naviduck-dameng` 经 `[patch.crates-io]` git 依赖引用修复分支；上游恢复后向其提 PR，上游发布修复版后切回 crates.io 精确版本。
+驱动：`dm-pure`（MIT，纯 Rust 同步 API）。阶段 0 判据 1–4 全部通过，ODBC 兜底不启用。dm-pure 1.2.4 有四处协议缺陷，已定位并验证补丁（验收记录「dm-pure 缺陷与补丁」节）。上游仓库 `zhangtao103239/dm8_pure_rs` 已从 GitHub 消失（404，全站含 fork 搜索无镜像），暂无法 fork/提 PR。**依赖策略（已确认）**：补丁托管在自建公开镜像 `github.com/ekovovo/dm-rs`（`main` = crates.io 1.2.4 原版镜像，`fix/protocol-lob-explain-error-status` 分支仅含补丁），`naviduck-dameng` 经 `[patch.crates-io]` git 依赖引用修复分支；上游恢复后向其提 PR，上游发布修复版后切回 crates.io 精确版本。
 
 ## 1. 范围与首版边界
 
@@ -293,7 +293,7 @@ dm-pure `Value` → 网格文本（`naviduck_util::format` 现有工具优先）
 | D2 | 取消 = `SP_CLOSE_SESSION` 杀整个会话，取消后必须重连 | dm-pure 无协议级取消；DM 无「只中断语句」的等价 API（对照 Go 驱动确认） | 恢复宏按 disconnected 重连 + 事务丢失守卫；上游若加取消 API 再切换 |
 | D3 | SSL 不支持（`supports_ssl=false`） | dm-pure 1.2.4 无 TLS 路径 | 上游支持后开启；ODBC 兜底路线保留在规格但不启用 |
 | D4 | 建库「GBK」选项实际是 GB18030 | DM 的 UNICODE_FLAG=0 即 GB18030；dm-pure 握手返回 `gb18030` | 文案与日志按 GB18030 表述，不写 GBK |
-| D5 | dm-pure 1.2.4 四处协议缺陷需补丁（LOB/EXPLAIN/错误消息/SET SCHEMA） | 上游 bug，对照官方 Go 驱动定位并验证；上游仓库已消失（404），无法 fork/提 PR | 补丁托管自建镜像 `ekovovo/dm8_pure_rs`（git 依赖）；上游恢复后提 PR，发修复版后切回 crates.io |
+| D5 | dm-pure 1.2.4 四处协议缺陷需补丁（LOB/EXPLAIN/错误消息/SET SCHEMA） | 上游 bug，对照官方 Go 驱动定位并验证；上游仓库已消失（404），无法 fork/提 PR | 补丁托管自建镜像 `ekovovo/dm-rs`（git 依赖）；上游恢复后提 PR，发修复版后切回 crates.io |
 | D6 | 表 DDL 用 `SP_TABLEDEF`，不用 `DBMS_METADATA.GET_DDL` | GET_DDL 对 TABLE 报 -20008、其余返回空串（实测） | 视图/索引/序列 DDL 由目录合成 |
 | D7 | 单数据库节点（`DAMENG`）保留在导航树 | 通用三层树（连接→数据库→模式）零分支；Navicat 达梦是否直接显示模式待 reference 核对 | 核对后如 Navicat 折叠数据库层，按能力字段调整，不按产品名分支 |
 | D8 | 首版不暴露 ROWID、不做 `/` 终结符、mode 4 反斜杠转义未实测 | 控制首版范围 | 后续任务实测后开启 |
