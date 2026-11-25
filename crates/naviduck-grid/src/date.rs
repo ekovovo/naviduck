@@ -102,21 +102,22 @@ fn split3(text: &str, sep: char) -> Option<(i32, u32, u32)> {
 }
 
 fn days_in_month(y: i32, m: u32) -> u32 {
-    let Some(first) = chrono::NaiveDate::from_ymd_opt(y, m.clamp(1, 12), 1) else {
+    let Ok(first) = jiff::civil::Date::new(y.clamp(-9999, 9999) as i16, m.clamp(1, 12) as i8, 1)
+    else {
         return 30;
     };
-    first
-        .checked_add_months(chrono::Months::new(1))
-        .and_then(|next| next.pred_opt())
-        .map(|last| chrono::Datelike::day(&last))
-        .unwrap_or(30)
+    first.days_in_month() as u32
 }
 
 /// Sunday = 0.
 fn weekday_sunday(y: i32, m: u32, d: u32) -> u32 {
-    chrono::NaiveDate::from_ymd_opt(y, m, d)
-        .map(|date| chrono::Datelike::weekday(&date).num_days_from_sunday())
-        .unwrap_or(0)
+    jiff::civil::Date::new(
+        y.clamp(-9999, 9999) as i16,
+        m.clamp(1, 12) as i8,
+        d.clamp(1, 31) as i8,
+    )
+    .map(|date| date.weekday().to_sunday_zero_offset() as u32)
+    .unwrap_or(0)
 }
 
 /// 42 cells, Monday first. `None` is a leading or trailing blank.
@@ -133,12 +134,8 @@ fn month_cells(y: i32, m: u32) -> [Option<u32>; 42] {
 
 /// Today in the local time zone, like Navicat and every other date field.
 fn today() -> (i32, u32, u32) {
-    let date = chrono::Local::now().date_naive();
-    (
-        chrono::Datelike::year(&date),
-        chrono::Datelike::month(&date),
-        chrono::Datelike::day(&date),
-    )
+    let t = jiff::Zoned::now();
+    (t.year() as i32, t.month() as u32, t.day() as u32)
 }
 
 pub(crate) fn open(

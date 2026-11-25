@@ -363,9 +363,12 @@ mod tests {
 
     #[test]
     fn only_errors_keeps_failed_statements() {
-        let at = chrono::TimeZone::with_ymd_and_hms(&chrono::Local, 2026, 1, 2, 3, 4, 5).unwrap();
+        let at = jiff::civil::date(2026, 1, 2)
+            .at(3, 4, 5, 0)
+            .in_tz("UTC")
+            .unwrap();
         let entry = |sql: &str, error: Option<&str>| LogEntry {
-            time: at,
+            time: at.clone(),
             connection: "c".into(),
             session: 1,
             kind: "SQLITE".into(),

@@ -112,7 +112,7 @@ fn messages_follow_navicat() {
 #[test]
 fn pinned_hover_lists_when_and_where() {
     let info = RunInfo {
-        at: chrono::Local::now(),
+        at: jiff::Zoned::now(),
         query_time: Duration::from_millis(1500),
         connection: "local".into(),
         connection_id: "c1".into(),

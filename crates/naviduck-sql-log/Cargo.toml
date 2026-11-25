@@ -8,6 +8,6 @@ repository.workspace = true
 description = "In-memory and on-disk SQL history shared by the drivers and the query panel."
 
 [dependencies]
-chrono.workspace = true
+jiff.workspace = true
 tokio.workspace = true
 tracing.workspace = true

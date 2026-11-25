@@ -9,7 +9,7 @@ description = "Pure helpers shared by the naviduck crates. No UI and no database
 
 [dependencies]
 naviduck-sql = { path = "../naviduck-sql" }
-chrono.workspace = true
+jiff.workspace = true
 semver = "1"
 hex.workspace = true
 serde.workspace = true

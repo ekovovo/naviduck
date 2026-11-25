@@ -393,7 +393,7 @@ impl QueryEditor {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let started = info.at;
+        let started = info.at.clone();
         let elapsed = info.query_time;
         match result {
             Ok(plan) => {

@@ -564,9 +564,20 @@ fn query_infos(scope: &Scope) -> Vec<ObjectInfo> {
         .into_iter()
         .map(|q| {
             let mut properties = Vec::new();
-            if let Some(t) = q.modified {
-                let t: chrono::DateTime<chrono::Local> = t.into();
-                properties.push(("modified".into(), t.format("%Y-%m-%d %H:%M:%S").to_string()));
+            if let Some(t) = q.modified.and_then(|t| jiff::Timestamp::try_from(t).ok()) {
+                let t = t.to_zoned(jiff::tz::TimeZone::system());
+                properties.push((
+                    "modified".into(),
+                    format!(
+                        "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+                        t.year(),
+                        t.month(),
+                        t.day(),
+                        t.hour(),
+                        t.minute(),
+                        t.second()
+                    ),
+                ));
             }
             properties.push(("data_length".into(), q.size.to_string()));
             ObjectInfo {

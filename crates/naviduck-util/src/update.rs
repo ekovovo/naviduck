@@ -13,8 +13,8 @@ pub fn newer_version(raw: &str, current: &str) -> Option<String> {
 /// The same timestamp is the build that is running. A missing or unparseable time is not newer.
 pub fn nightly_is_newer(release_built_at: &str, built_at: &str) -> bool {
     let (Ok(release), Ok(built)) = (
-        chrono::DateTime::parse_from_rfc3339(release_built_at.trim()),
-        chrono::DateTime::parse_from_rfc3339(built_at.trim()),
+        release_built_at.trim().parse::<jiff::Timestamp>(),
+        built_at.trim().parse::<jiff::Timestamp>(),
     ) else {
         return false;
     };

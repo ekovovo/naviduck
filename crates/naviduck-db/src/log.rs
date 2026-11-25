@@ -13,7 +13,7 @@ pub async fn logged<T>(
     sql: &str,
     fut: impl Future<Output = DbResult<T>>,
 ) -> DbResult<T> {
-    let time = chrono::Local::now();
+    let time = jiff::Zoned::now();
     let started = std::time::Instant::now();
     let result = fut.await;
     record(LogEntry {

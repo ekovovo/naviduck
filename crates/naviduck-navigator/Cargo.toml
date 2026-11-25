@@ -23,7 +23,7 @@ tracing.workspace = true
 tokio.workspace = true
 serde_json.workspace = true
 serde.workspace = true
-chrono.workspace = true
+jiff.workspace = true
 
 [dev-dependencies]
 naviduck-mysql = { path = "../naviduck-mysql" }

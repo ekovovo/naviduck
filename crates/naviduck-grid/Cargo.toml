@@ -16,7 +16,7 @@ naviduck-util.workspace = true
 naviduck-sql = { path = "../naviduck-sql" }
 naviduck-db.workspace = true
 naviduck-schema = { path = "../naviduck-schema" }
-chrono.workspace = true
+jiff.workspace = true
 anyhow.workspace = true
 gpui-kit = { workspace = true, features = ["tree-sitter-sql"] }
 lsp-types = "0.97"

@@ -104,9 +104,7 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 
 ### M14 达梦 DM8 接入
 
-规格与阶段 0 技术验证见 [140-dameng.md](design/140-dameng.md) 和 [验收记录](pr/acceptance-dameng.md)。
-
-| 任务 | 状态 | 验证与说明 |
+规格与阶段 0 技术验证见 [140-dameng.md](design/140-dameng.md) 和 [验收记录](pr/acceptance-dameng.md)。| 任务 | 状态 | 验证与说明 |
 | --- | --- | --- |
 | 阶段 0 技术验证与规格 PR | 完成 | 九项验证 + 四补丁定位见验收记录；规格 `140-dameng.md`、`db/dameng/features.md` |
 | 能力层（界面零分支） | 完成 | `DialectFeatures` 三新字段、`ExplainStyle::TextLines`、设计器方言钩子、`DefinitionFamily::Dameng` 各臂、`session_setup` 识别 `SET SCHEMA`（`0012f4e`） |
@@ -114,8 +112,15 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 | 共享层接线 | 完成 | `plan.rs` 调 `add_column`/`modify_column`（PG/MySQL/SQLite 回归不变）；`naviduck-session::init` 注册；`check-deps.sh` 加名单；自绘图标 `icons/db/dameng.svg` |
 | 用户工具只读列表 | 完成 | `Unavailable` + `account_list_sql=Some` 时渲染只读列表（隐藏新建/设计、禁双击）；SQLite 原因文本行为不变；`security_plan` 测试补 Dameng 契约 |
 | 迁移不可回滚提示 | 完成 | 预览页在 `transactional_ddl=false` 时显示固定提示（达梦与 MySQL 同样适用，能力驱动不按产品分支） |
-| 实库测试 | 完成 | `NAVIDUCK_DM_LIVE=1` 10 项本地通过：连接/错误密码、目录八方法、中文、LOB、事务与 DDL 隐式提交、取消杀会话、SET SCHEMA、分页、EXPLAIN、lazy fetch、设计器迁移语法；DM 镜像不进 CI（许可），LOB/EXPLAIN/SET SCHEMA 三项在未打补丁的 dm-pure 上自动跳过 |
-| dm-pure 补丁接线 | 未开始 | 补丁文件随 /tmp 清理已丢失，需按验收记录重建四补丁并推送到自建镜像 `ekovovo/dm8_pure_rs`（仓库尚未创建），再经 `[patch.crates-io]` git 依赖接线；上游恢复后提 PR |
+| 实库测试 | 完成 | `NAVIDUCK_DM_LIVE=1` 10 项本地通过（2026-11-25 补丁接线后单线程与并行各跑一次）：连接/错误密码、目录八方法、中文、LOB、事务与 DDL 隐式提交、取消杀会话、SET SCHEMA、分页、EXPLAIN、lazy fetch、设计器迁移语法；DM 镜像不进 CI（许可）。LOB/EXPLAIN/SET SCHEMA 三项守卫已随补丁接线转正 |
+| dm-pure 补丁接线 | 基本完成 | 四补丁按验收记录并对照 Go 驱动（`gitee.com/chunanyong/dm`）重建于本地镜像 `~/github-project/dm8_pure_rs`（分支 `fix/protocol-lob-explain-error-status`，仅改 `src/client.rs`）；根 Cargo.toml 已接 `[patch.crates-io]`（暂为本地 path，仓库建立后切 git 依赖并提交 Cargo.lock）；实库测试 10 项全通过，三个守卫转正。待办：创建 `github.com/ekovovo/dm8_pure_rs`、推送（征得同意）、patch 切 git |
+
+### chrono → jiff（RUSTSEC-2026-0543）
+
+| 任务 | 状态 | 验证与说明 |
+| --- | --- | --- |
+| 八个直接依赖 chrono 的 crate 迁移到 jiff 0.2 | 完成 | util（RFC3339 解析）、sql-log（LogEntry 时间与 QueryExec.log 渲染）、db、schema、navigator、grid（日历数学换 `civil::Date`）、query（运行/结果/历史/恢复）、session（仅声明未用，直接移除）；`chrono::DateTime<Local>` → `jiff::Zoned`，`NaiveDate` → `civil::Date`，格式化改手写字段拼接（jiff strtime 无 `%.3f` 指令）。同步修正两个从未真正跑过的测试断言：LOB 测试的 CLOB 构造（`repeat(16000)` 只有 112000 字符，`take(136000)` 从未截断）与 designer 测试对 catalog 测试遗留触发器的跨测试依赖 |
+| 依赖审计 | 完成 | chrono 仅剩 gpui-base（gpui-kit 0.8.0）的传递依赖，`deny.toml` 与 `.cargo/audit.toml` 的 RUSTSEC-2026-0543 豁免保留并更新注释；全工作区 fmt/clippy/69 套件通过 |
 
 ### M4 表设计器
 
@@ -304,7 +309,7 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 
 | 项目 | 引入于 | 计划处理 |
 | --- | --- | --- |
-| dm-pure 1.2.4 四处协议缺陷未打补丁（行外 LOB 读空、EXPLAIN 挂起、SET SCHEMA/CALL 挂起、错误消息偶发前缀）；补丁托管仓库 `ekovovo/dm8_pure_rs` 尚未创建 | M14 | 按验收记录「dm-pure 缺陷与补丁」重建四补丁推送到自建镜像，根 Cargo.toml 加 `[patch.crates-io]`；接线前实库测试对 LOB/EXPLAIN/SET SCHEMA 自动跳过 |
+| dm-pure 四补丁已重建并接线（path patch），托管仓库 `ekovovo/dm8_pure_rs` 尚未创建：patch 暂指本地镜像 `~/github-project/dm8_pure_rs`，Cargo.lock 尚未随 git 依赖提交 | M14 | 用户创建 GitHub 仓库并征得同意后推送 `main`（1.2.4 原版镜像）与 `fix/protocol-lob-explain-error-status`（四补丁），patch 切 git 依赖，重跑实库测试后提交 Cargo.lock；上游恢复后提 PR |
 | DM 实库测试为本地可选，不进 CI（DM 开发版许可仅限学习/测试/开发，1 年试用） | M14 | `NAVIDUCK_DM_LIVE=1` + `DM_PORT` 手动执行；起容器命令见 live.rs 文件头 |
 | 迁移预览的不可回滚提示按 `transactional_ddl=false` 能力显示，MySQL 预览页也因此新增同一提示（此前没有） | M14 | 能力驱动、文案事实正确；与 Navicat 并排实测后如需收敛再按能力细分 |
 | 连接表单/导航树/表查看器/查询编辑器对 DM 的整体界面目测未做（需要本机连 DM 实例走查） | M14 | 下一轮连同 CS=0 与 mode 2/4 实例一起验收 |
@@ -380,4 +385,4 @@ M2 的任务都已完成，逐项记录见 git 历史；M2 的功能状态仍在
 | 导航树性能 | `cargo run --release -p naviduck-navigator --example tree_spike` | 本地执行，需要 Metal |
 | SQL 编辑器性能 | `cargo run --release -p naviduck-query --example editor_spike` | 本地执行，需要 Metal；`NAVIDUCK_SPIKE_LINES` 改行数，截图写到 `target/editor-spike-*.png` |
 | 查询解释实库测试 | `docker compose up -d --wait && NAVIDUCK_LIVE=1 cargo test -p naviduck-query live_plans` | 本地执行；MySQL 8、MariaDB 11、PostgreSQL 16 的计划都能解析 |
-| 达梦实库测试（本地可选） | `NAVIDUCK_DM_LIVE=1 cargo test -p naviduck-dameng --test live` | 手动起 DM8 容器后执行（命令见 live.rs 文件头），测完 `docker stop dm8-utf8 && docker rm dm8-utf8`；LOB/EXPLAIN/SET SCHEMA 三项在未打补丁的 dm-pure 上自动跳过 |
+| 达梦实库测试（本地可选） | `NAVIDUCK_DM_LIVE=1 cargo test -p naviduck-dameng --test live` | 手动起 DM8 容器后执行（命令见 live.rs 文件头与验收记录），测完 `docker stop dm8-utf8 && docker rm dm8-utf8`；补丁接线后 LOB/EXPLAIN/SET SCHEMA 三项守卫转正（守卫保留，检测未打补丁的 dm-pure 时跳过并说明原因） |

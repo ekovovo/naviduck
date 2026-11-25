@@ -13,10 +13,10 @@ ignore = [
     # channel needs a remote attacker observing RSA *signing*; naviduck only uses
     # `rsa` through russh for local SSH keys. Mirrored in `.cargo/audit.toml`.
     { id = "RUSTSEC-2023-0071", reason = "rsa has no fixed release, not exploitable for local SSH keys" },
-    # Unmaintained with no fixed release; the advisory recommends jiff. chrono is a
-    # direct dependency of eight crates (dates, timestamps, formatting), so the
-    # migration is its own task, not a lockfile bump. Mirrored in `.cargo/audit.toml`.
-    { id = "RUSTSEC-2026-0543", reason = "chrono migration to jiff is tracked as a separate task" },
+    # Unmaintained with no fixed release; the advisory recommends jiff. Our own crates
+    # migrated to jiff; chrono now only enters the tree transitively through gpui-base
+    # (gpui-kit 0.8.0), which we do not fork. Mirrored in `.cargo/audit.toml`.
+    { id = "RUSTSEC-2026-0543", reason = "chrono remains only as a gpui-base transitive dependency" },
 ]
 
 [licenses]

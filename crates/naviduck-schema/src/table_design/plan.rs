@@ -375,7 +375,8 @@ fn trigger_name(sql: &str) -> DbResult<String> {
 }
 
 fn today() -> String {
-    chrono::Local::now().format("%Y%m%d").to_string()
+    let t = jiff::Zoned::now();
+    format!("{:04}{:02}{:02}", t.year(), t.month(), t.day())
 }
 
 /// `_table_old_YYYYMMDD`, then `_1`, `_2`, when that name is already a table.

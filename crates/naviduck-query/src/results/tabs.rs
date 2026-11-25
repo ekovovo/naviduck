@@ -40,7 +40,7 @@ impl Results {
         self.explains_this_run = 0;
         self.profile = None;
         self.status = None;
-        self.started = Some(chrono::Local::now());
+        self.started = Some(jiff::Zoned::now());
         self.ended = None;
         if !matches!(self.page, Page::Tab(id) if self.tabs.iter().any(|t| t.id == id)) {
             self.page = Page::Messages;
@@ -164,7 +164,7 @@ impl Results {
 
     /// Picks the page "View > Show After Execution" asks for.
     pub(crate) fn end_run(&mut self, explain: bool, cx: &mut Context<QueryEditor>) {
-        self.ended = Some(chrono::Local::now());
+        self.ended = Some(jiff::Zoned::now());
         let first_new = self
             .tabs
             .iter()

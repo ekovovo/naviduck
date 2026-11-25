@@ -34,7 +34,7 @@ tracing = "0.1"
 tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "sync", "macros", "io-util"] }
 futures = "0.3"
 uuid = { version = "1", features = ["v4"] }
-chrono = { version = "0.4", default-features = false, features = ["clock"] }
+jiff = "0.2"
 regex = "1"
 hex = "0.4"
 
@@ -56,3 +56,11 @@ opt-level = "s"
 # panic = "abort"
 # "s" for a smaller binary. The 2026-10-10 spike scrolled about 20% slower than opt-level 3
 # (21-table-viewer.md §1); release keeps "s".
+
+# dm-pure 1.2.4's upstream repository returns 404; the four protocol patches
+# (off-row LOB, EXPLAIN cmd=149, error body layout, session-state short frame)
+# live on the fix branch of the self-hosted mirror (docs/pr/acceptance-dameng.md).
+# File an upstream PR once it is reachable again; switch back to a pinned
+# crates.io release and drop this section when upstream publishes a fix.
+[patch.crates-io]
+dm-pure = { path = "/Users/eko/github-project/dm8_pure_rs" }

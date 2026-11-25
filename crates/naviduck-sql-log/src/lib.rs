@@ -16,7 +16,7 @@ pub const FILE_NAME: &str = "QueryExec.log";
 
 #[derive(Clone, Debug)]
 pub struct LogEntry {
-    pub time: chrono::DateTime<chrono::Local>,
+    pub time: jiff::Zoned,
     pub connection: String,
     /// 0 when the server has no session ID (SQLite)
     pub session: u64,
@@ -52,10 +52,23 @@ impl Header {
 impl LogEntry {
     pub fn header(&self, h: Header) -> String {
         let mut out = String::new();
+        let date = format!(
+            "{:04}-{:02}-{:02}",
+            self.time.year(),
+            self.time.month(),
+            self.time.day()
+        );
+        let time = format!(
+            "{:02}:{:02}:{:02}.{:03}",
+            self.time.hour(),
+            self.time.minute(),
+            self.time.second(),
+            self.time.millisecond()
+        );
         let stamp = match (h.date, h.time) {
-            (true, true) => self.time.format("%Y-%m-%d %H:%M:%S%.3f").to_string(),
-            (true, false) => self.time.format("%Y-%m-%d").to_string(),
-            (false, true) => self.time.format("%H:%M:%S%.3f").to_string(),
+            (true, true) => format!("{date} {time}"),
+            (true, false) => date,
+            (false, true) => time,
             (false, false) => String::new(),
         };
         let fields = [
@@ -199,7 +212,9 @@ mod tests {
 
     fn entry(sql: &str, error: Option<&str>) -> LogEntry {
         LogEntry {
-            time: chrono::TimeZone::with_ymd_and_hms(&chrono::Local, 2026, 10, 10, 23, 49, 1)
+            time: jiff::civil::date(2026, 10, 10)
+                .at(23, 49, 1, 0)
+                .in_tz("UTC")
                 .unwrap(),
             connection: "sakila 本地".into(),
             session: 42,

@@ -337,13 +337,24 @@ impl QueryEditor {
         let r = &self.results;
         let none = || t!("query.none").to_string();
         let errors = r.rows.iter().filter(|x| x.error).count();
-        let fmt = |t: &Option<chrono::DateTime<chrono::Local>>| {
-            t.map(|t| t.format("%H:%M:%S%.3f").to_string())
+        let fmt = |t: &Option<jiff::Zoned>| {
+            t.as_ref()
+                .map(|t| {
+                    format!(
+                        "{:02}:{:02}:{:02}.{:03}",
+                        t.hour(),
+                        t.minute(),
+                        t.second(),
+                        t.millisecond()
+                    )
+                })
                 .unwrap_or_else(none)
         };
         let ran = r.started.is_some();
-        let elapsed = match (r.started, r.ended) {
-            (Some(a), Some(b)) => secs((b - a).to_std().unwrap_or_default()),
+        let elapsed = match (r.started.clone(), r.ended.clone()) {
+            (Some(a), Some(b)) => secs(Duration::from_secs_f64(
+                (b - a).total(jiff::Unit::Second).unwrap_or(0.0),
+            )),
             _ => none(),
         };
         let stat = |label: String, value: String| {

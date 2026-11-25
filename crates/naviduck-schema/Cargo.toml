@@ -11,7 +11,7 @@ description = "Lossless table drafts, definition parsing and guarded schema chan
 naviduck-db = { path = "../naviduck-db" }
 naviduck-model.workspace = true
 naviduck-sql = { path = "../naviduck-sql" }
-chrono.workspace = true
+jiff.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

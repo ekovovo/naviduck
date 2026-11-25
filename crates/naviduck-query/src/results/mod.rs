@@ -37,7 +37,7 @@ pub(crate) const MAX_RESULTS: usize = 20;
 /// When and where a result came from, shown on hover over a pinned tab and on explain tabs.
 #[derive(Clone)]
 pub(crate) struct RunInfo {
-    pub at: chrono::DateTime<chrono::Local>,
+    pub at: jiff::Zoned,
     pub query_time: Duration,
     pub connection: String,
     pub connection_id: String,
@@ -71,7 +71,15 @@ impl RunInfo {
         let mut out = vec![
             (
                 t!("query.info_time").to_string(),
-                self.at.format("%Y-%m-%d %H:%M:%S").to_string(),
+                format!(
+                    "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+                    self.at.year(),
+                    self.at.month(),
+                    self.at.day(),
+                    self.at.hour(),
+                    self.at.minute(),
+                    self.at.second()
+                ),
             ),
             (
                 t!("query.info_query_time").to_string(),
@@ -134,8 +142,8 @@ pub(crate) struct Results {
     messages: Entity<EditorState>,
     messages_text: String,
     pub rows: Vec<SummaryRow>,
-    started: Option<chrono::DateTime<chrono::Local>>,
-    ended: Option<chrono::DateTime<chrono::Local>>,
+    started: Option<jiff::Zoned>,
+    ended: Option<jiff::Zoned>,
     pub only_errors: bool,
     /// Result and explain tabs made by the current run, for naming and the cap
     results_this_run: usize,

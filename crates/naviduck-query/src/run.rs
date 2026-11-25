@@ -206,7 +206,7 @@ pub(crate) struct Planned {
 pub(crate) struct Outcome {
     pub planned: Planned,
     pub result: DbResult<Vec<ResultSet>>,
-    pub started: chrono::DateTime<chrono::Local>,
+    pub started: jiff::Zoned,
     pub elapsed: Duration,
 }
 
@@ -349,7 +349,7 @@ impl QueryEditor {
             && Settings::global(cx).show_profile;
         let mariadb = self.server_version(cx).contains("MariaDB");
         let mut source = crate::results::RunInfo {
-            at: chrono::Local::now(),
+            at: jiff::Zoned::now(),
             query_time: Duration::ZERO,
             connection: self.connection_name(cx),
             connection_id: self.target.connection.clone().unwrap_or_default(),
@@ -395,7 +395,7 @@ impl QueryEditor {
                 if stop.load(Ordering::Acquire) {
                     break;
                 }
-                let started = chrono::Local::now();
+                let started = jiff::Zoned::now();
                 let clock = Instant::now();
                 let sql = p.sql.clone();
                 refresh.mark_submitted();
@@ -566,7 +566,7 @@ impl QueryEditor {
             );
         }
         let editor = cx.entity().downgrade();
-        info.at = outcome.started;
+        info.at = outcome.started.clone();
         info.query_time = outcome.elapsed;
         self.results.record(outcome, info, editor, window, cx);
         cx.notify();
@@ -786,7 +786,7 @@ pub(crate) async fn explain_all(
         if stop.load(Ordering::Acquire) {
             break;
         }
-        let started = chrono::Local::now();
+        let started = jiff::Zoned::now();
         let clock = Instant::now();
         let sql = p.sql.clone();
         let plan_dialect = dialect.clone();
@@ -846,7 +846,7 @@ mod tests {
         assert_eq!(sets[0].affected_rows, Some(0));
         assert!(context.unwrap().is_err());
         let mut info = crate::results::RunInfo {
-            at: chrono::Local::now(),
+            at: jiff::Zoned::now(),
             query_time: Duration::ZERO,
             connection: "fixture".into(),
             connection_id: "fixture".into(),

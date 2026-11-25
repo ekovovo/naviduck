@@ -86,7 +86,18 @@ impl QueryEditor {
             source: self.source.clone(),
             target: self.target.clone(),
             text: self.text(cx),
-            saved_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+            saved_at: {
+                let t = jiff::Zoned::now();
+                format!(
+                    "{:04}-{:02}-{:02} {:02}:{:02}:{:02}",
+                    t.year(),
+                    t.month(),
+                    t.day(),
+                    t.hour(),
+                    t.minute(),
+                    t.second()
+                )
+            },
             on_quit,
         }
     }

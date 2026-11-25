@@ -4,9 +4,11 @@
 //! ```sh
 //! docker run -d --name dm8-utf8 --platform linux/amd64 --privileged -p 15236:5236 \
 //!   -e PAGE_SIZE=16 -e LD_LIBRARY_PATH=/opt/dmdbms/bin -e EXTENT_SIZE=32 \
-//!   -e BLANK_PAD_MODE=1 -e LOG_SIZE=1024 -e UNICODE_FLAG=1 -e LENGTH_IN_CHAR=1 \
-//!   -e INSTANCE_NAME=dm8-utf8 -e SYSDBA_PWD=SYSDBA001 -e BUFFER=1000 \
+//!   -e BLANK_PAD_MODE=1 -e LOG_SIZE=1024 -e UNICODE_FLAG=1 \
+//!   -e INSTANCE_NAME=DM8UTF8 -e SYSDBA_PWD=SYSDBA001 -e BUFFER=1000 \
 //!   dm8_single:dm8_20241022_rev244896_x86_rh6_64
+//! # This image's dminit rejects LENGTH_IN_CHAR and hyphenated instance names;
+//! # wait for the in-container init loop, then run the tests (DM_PORT defaults to 15236).
 //! NAVIDUCK_DM_LIVE=1 cargo test -p naviduck-dameng --test live
 //! docker stop dm8-utf8 && docker rm dm8-utf8
 //! ```
@@ -294,7 +296,9 @@ fn lobs_round_trip_without_truncation() {
              \"DOC\" CLOB, \"IMG\" BLOB)",
         )
         .await;
-        let clob: String = "中文字符ABC".repeat(16000).chars().take(136000).collect();
+        // 7 chars per unit: repeat 20000 then take 136000 to actually truncate
+        // mid-unit, exercising the multi-chunk out-of-row read.
+        let clob: String = "中文字符ABC".repeat(20000).chars().take(136000).collect();
         let blob: Vec<u8> = (0..200_000u32).map(|i| (i % 251) as u8).collect();
         // Bind the large values as parameters; the driver streams out-of-row LOBs.
         let insert = "INSERT INTO \"SYSDBA\".\"ND_LOB_T\" (\"DOC\", \"IMG\") VALUES (?, ?)";
@@ -318,7 +322,9 @@ fn lobs_round_trip_without_truncation() {
                 eprintln!("skipped: out-of-row LOB reads need the patched dm-pure (D5)");
                 return;
             }
-            dm_pure::Value::Str(text) => assert_eq!(text.len(), 136_000),
+            // The guard above only fires on unpatched dm-pure; the string is the
+            // full CLOB, so compare characters (the content is mostly CJK).
+            dm_pure::Value::Str(text) => assert_eq!(text.chars().count(), 136_000),
             other => panic!("{other:?}"),
         }
         let rows = read("SELECT \"IMG\" FROM \"SYSDBA\".\"ND_LOB_T\" WHERE \"ID\" = (SELECT MAX(\"ID\") FROM \"SYSDBA\".\"ND_LOB_T\")");
@@ -602,7 +608,7 @@ fn designer_migration_statements_execute_on_the_server() {
         return;
     }
     runtime::runtime().block_on(async {
-        cleanup(&[("TABLE", "ND_DSG_T"), ("TABLE", "ND_DSG_T2")]).await;
+        cleanup(&[("TABLE", "ND_DSG_T"), ("TABLE", "ND_DSG_T2"), ("TRIGGER", "ND_DSG_TRG")]).await;
         let mut session = session().await;
         for sql in [
             "CREATE TABLE \"SYSDBA\".\"ND_DSG_T\" (\"ID\" INT IDENTITY(1, 1) PRIMARY KEY, \
@@ -624,7 +630,11 @@ fn designer_migration_statements_execute_on_the_server() {
             "CREATE INDEX \"SYSDBA\".\"ND_DSG_IDX\" ON \"SYSDBA\".\"ND_DSG_T\"(\"MEMO\")",
             "ALTER TABLE \"SYSDBA\".\"ND_DSG_T\" DROP CONSTRAINT \"ND_DSG_CK\"",
             "DROP INDEX \"SYSDBA\".\"ND_DSG_IDX\"",
-            "DROP TRIGGER \"SYSDBA\".\"ND_CAT_TRG\"",
+            // Own trigger: the earlier suite relied on the catalog test leaving
+            // ND_CAT_TRG behind, which only worked while the tests raced.
+            "CREATE OR REPLACE TRIGGER \"SYSDBA\".\"ND_DSG_TRG\" AFTER INSERT ON \
+             \"SYSDBA\".\"ND_DSG_T\" BEGIN NULL; END;",
+            "DROP TRIGGER \"SYSDBA\".\"ND_DSG_TRG\"",
             "ALTER TABLE \"SYSDBA\".\"ND_DSG_T\" DROP COLUMN \"SCORE\"",
             "ALTER TABLE \"SYSDBA\".\"ND_DSG_T\" RENAME TO \"ND_DSG_T2\"",
         ] {
@@ -645,6 +655,6 @@ fn designer_migration_statements_execute_on_the_server() {
         .await
         .unwrap();
         assert_eq!(comment, "备注");
-        cleanup(&[("TABLE", "ND_DSG_T"), ("TABLE", "ND_DSG_T2")]).await;
+        cleanup(&[("TABLE", "ND_DSG_T"), ("TABLE", "ND_DSG_T2"), ("TRIGGER", "ND_DSG_TRG")]).await;
     });
 }

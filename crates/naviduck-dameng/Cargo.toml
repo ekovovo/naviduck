@@ -16,7 +16,7 @@ tokio.workspace = true
 futures.workspace = true
 tracing.workspace = true
 hex.workspace = true
-# Pinned: the upstream repository disappeared (404) and 1.2.4 needs four protocol
-# patches hosted on a self-hosted mirror, wired through [patch.crates-io] in the
-# workspace root (140-dameng.md, acceptance-dameng.md).
+# Pinned: the upstream repository disappeared (404). The workspace root wires
+# [patch.crates-io] to the self-hosted mirror carrying the four protocol patches
+# (140-dameng.md, acceptance-dameng.md).
 dm-pure = "=1.2.4"
