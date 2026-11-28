@@ -1,7 +1,7 @@
 #!/bin/bash
-# Rebuild the rolling nightly: a workflow_dispatch of publish.yml on main.
-# Pushes to main publish the nightly automatically; use this to rebuild the
-# current main without a new commit.
+# Publish the rolling nightly: a workflow_dispatch of publish.yml on main.
+# Nightly is not built automatically on schedule or push to main; run this
+# script when you want to publish a nightly build from origin/main.
 #
 #   scripts/nightly.sh            ask, then start the run
 #   scripts/nightly.sh --watch    follow it to the end

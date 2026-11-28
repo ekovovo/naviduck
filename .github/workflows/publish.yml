@@ -2,19 +2,14 @@ name: Publish
 
 on:
   push:
-    branches: ["main"]
     tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
-  schedule:
-    # Daily fallback at 18:00 UTC. A push to main publishes nightly immediately.
-    - cron: "0 18 * * *"
   workflow_dispatch:
 
 concurrency:
-  # One publish at a time per ref. A newer push to main supersedes the build in
-  # flight; tag, schedule, and manual runs queue instead so an upload is never
-  # cut off halfway.
+  # One publish at a time per ref. Tag and manual runs queue so an upload is
+  # never cut off halfway.
   group: publish-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -45,21 +40,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           should_build=true
-          # A run queued behind another one may carry an older commit. Only the
-          # push that matches main's head may publish a nightly, so a delayed
-          # schedule or manual run cannot overwrite a newer build.
-          if [ "${GITHUB_REF}" = "refs/heads/main" ] && [ "${GITHUB_EVENT_NAME}" != "push" ]; then
+          # A queued manual run may carry an older commit. Skip if main has
+          # moved ahead so an older dispatch cannot overwrite a newer build.
+          if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
             head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${GITHUB_REF_NAME}" -q .object.sha 2>/dev/null || echo "")"
             if [ -n "$head_sha" ] && [ "$head_sha" != "$GITHUB_SHA" ]; then
               echo "main moved to $head_sha; skipping stale run for $GITHUB_SHA"
-              should_build=false
-            fi
-          fi
-          # The daily fallback skips when the last nightly already built this commit.
-          if [ "${GITHUB_EVENT_NAME}" = "schedule" ] && [ "$should_build" = true ]; then
-            nightly_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/nightly" -q .object.sha 2>/dev/null || echo "")"
-            if [ "$nightly_sha" = "$GITHUB_SHA" ]; then
-              echo "nightly already built $GITHUB_SHA; skipping"
               should_build=false
             fi
           fi

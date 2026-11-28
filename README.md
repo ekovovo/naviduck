@@ -41,7 +41,8 @@ Naviduck 是一个以 macOS 优先的数据库图形客户端：用 [gpui-kit](h
 
 到 [Releases](https://github.com/ekovovo/naviduck/releases) 获取安装包：
 
-- **Nightly**（预发布）：`Naviduck-aarch64.dmg` 等，每日构建，跟随 main
+- **正式 / 预发布版本**：打 `v*` tag 时自动构建发布
+- **Nightly**（预发布）：`Naviduck-aarch64.dmg` 等，按需从 `main` 手动触发构建（`scripts/nightly.sh`）
 - 安装包附 `SHA256SUMS`；应用内「检查更新」读取同一清单
 
 > Nightly 构建未做正式签名与公证，macOS 首次打开可能需要在系统设置中放行。
